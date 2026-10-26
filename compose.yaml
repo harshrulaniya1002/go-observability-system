@@ -1,0 +1,182 @@
+services:
+  # PostgreSQL Database - Isolated backend service
+  postgres:
+    image: postgres:16
+    container_name: docker-observability-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-observability}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-observability_pass}
+      POSTGRES_DB: ${DB_NAME:-observability_db}
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-observability} -d ${DB_NAME:-observability_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - backend
+
+  # Go HTTP Service
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: docker-observability-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-observability}
+      DB_PASSWORD: ${DB_PASSWORD:-observability_pass}
+      DB_NAME: ${DB_NAME:-observability_db}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes:
+      - app-logs:/var/log/app
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    networks:
+      - backend
+      - frontend
+      - monitoring
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # Nginx Reverse Proxy
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: docker-observability-nginx
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "9080:80"
+    volumes:
+      - nginx-logs:/var/log/nginx
+    networks:
+      - frontend
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # Prometheus for metrics (optional observability)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: docker-observability-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus-data:/prometheus
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - monitoring
+
+  # Loki for log aggregation
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: docker-observability-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # Fluent Bit for log collection
+  fluent-bit:
+    build:
+      context: ./fluent-bit
+      dockerfile: Dockerfile
+    container_name: docker-observability-fluent-bit
+    depends_on:
+      loki:
+        condition: service_healthy
+    volumes:
+      - app-logs:/var/log/app:ro
+      - nginx-logs:/var/log/nginx:ro
+    networks:
+      - monitoring
+    environment:
+      - FLUENT_BIT_LOG_LEVEL=info
+
+  # Grafana for visualization (optional observability)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: docker-observability-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_INSTALL_PLUGINS: 'grafana-piechart-panel,grafana-worldmap-panel'
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - monitoring
+
+networks:
+  # Frontend network - accessible from host
+  frontend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.1.0/24
+
+  # Backend network - isolated from host
+  backend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.2.0/24
+
+  # Monitoring network - for observability stack
+  monitoring:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.3.0/24
+
+volumes:
+  app-logs:
+    driver: local
+  postgres-data:
+    driver: local
+  nginx-logs:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  loki-data:
+    driver: local

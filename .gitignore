@@ -1,0 +1,57 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Go
+*.o
+*.a
+*.so
+.exe
+.exe~
+*.dll
+*.dylib
+*.test
+*.out
+/bin/
+/dist/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary
+tmp/
+temp/
+cache/
+
+# Build artifacts
+build/
+dist/
+.build/
+
+# Dependencies
+vendor/
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db

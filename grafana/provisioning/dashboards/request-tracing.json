@@ -1,0 +1,302 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": "Loki",
+      "description": "Enter a request ID to trace all logs related to that request across services",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "content": "# Request Tracing\n\nUse the filters below to trace requests by ID. Request IDs are generated for every HTTP request and included in both logs and response headers (`X-Request-ID`).\n\n**Example queries:**\n- Trace a specific request ID across services\n- Filter by HTTP method and path\n- Find errors related to specific requests",
+        "mode": "markdown"
+      },
+      "type": "text"
+    },
+    {
+      "datasource": "Loki",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 2
+      },
+      "id": 2,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": 1,
+        "wrapLogMessage": false
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "expr": "{service=\"go-app\"} | json | request_id != \"\"",
+          "refId": "A",
+          "label": "All requests with IDs"
+        }
+      ],
+      "title": "Request Traces by Request ID",
+      "type": "logs"
+    },
+    {
+      "datasource": "Loki",
+      "description": "Track request flow with detailed timing information",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
+      "id": 3,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": 1,
+        "wrapLogMessage": false
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "expr": "{service=\"go-app\"} | json | method=\"GET\" | path=\"/api\"",
+          "refId": "A"
+        }
+      ],
+      "title": "GET /api Requests",
+      "type": "logs"
+    },
+    {
+      "datasource": "Loki",
+      "description": "Monitor slow requests that exceed threshold",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "yellow",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "id": 4,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": 1,
+        "wrapLogMessage": false
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "expr": "{service=\"go-app\"} | json | duration > 100",
+          "refId": "A"
+        }
+      ],
+      "title": "Slow Requests (>100ms)",
+      "type": "logs"
+    },
+    {
+      "datasource": "Loki",
+      "description": "Track request errors and failures across services",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 5,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": 1,
+        "wrapLogMessage": false
+      },
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {
+          "expr": "{service=\"go-app\"} | json | status_code >= 400",
+          "refId": "A"
+        }
+      ],
+      "title": "Error Requests (4xx, 5xx) with Request IDs",
+      "type": "logs"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 27,
+  "style": "dark",
+  "tags": [
+    "request-tracing",
+    "request-id",
+    "loki",
+    "observability"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "allValueIsRegex": false,
+        "allFormat": "glob",
+        "datasource": "Loki",
+        "definition": "{service=\"go-app\"} | json | request_id != \"\" | request_id",
+        "description": "Search by Request ID",
+        "includeAll": false,
+        "label": "Request ID",
+        "multi": true,
+        "multiFormat": "regex values",
+        "name": "request_id",
+        "options": [],
+        "query": "{service=\"go-app\"} | json | request_id != \"\" | request_id",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Request Tracing",
+  "uid": "request-tracing",
+  "version": 0
+}
