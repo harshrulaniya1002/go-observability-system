@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.1.0] - 2026-10-26
 
-### Added - Milestone 2: Persistent Logging
+### Feature Added: Persistent Logging
 
 #### Structured JSON Logging
 - Implemented comprehensive JSON logging for all application events
